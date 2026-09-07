@@ -10,15 +10,13 @@ import dev.shadmage.eggemall2._external.StackingPlugins.StackingPluginAPI;
 import dev.shadmage.eggemall2._external.StackingPlugins.UltimateStackerSupport;
 import org.bstats.bukkit.Metrics;
 import org.bukkit.Bukkit;
-import org.bukkit.entity.Egg;
 import org.mineacademy.fo.Common;
 import org.mineacademy.fo.plugin.SimplePlugin;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class EggEmAllPlugin extends SimplePlugin {
-	public static List<Egg> thrownEggs = new ArrayList<>();
+	public static final Set<UUID> thrownEggs = new HashSet<>();
 	public static SpawnEggs catchableMobs;
 
 	private StackingPluginAPI stackingPlugin;

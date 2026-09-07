@@ -24,7 +24,7 @@ public class SpigotUpdateChecker {
 
 	private void getVersion(final Consumer<String> consumer) {
 		Common.runAsync(() -> {
-			try (InputStream is = new URL("https://api.spigotmc.org/legacy/update.php?resource=" + this.resourceId + "/~").openStream(); Scanner scann = new Scanner(is)) {
+			try (InputStream is = new URL("https://api.spigotmc.org/legacy/update.php?resource=" + this.resourceId).openStream(); Scanner scann = new Scanner(is)) {
 				if (scann.hasNext()) {
 					consumer.accept(scann.next());
 				}

@@ -23,7 +23,13 @@ public final class ProcessPlaceholderMessages {
 
 		if (entity != null) {
 			msg = msg.replace("{entity}", entity.getName());
-			msg = msg.replace("{world}", Objects.requireNonNull(entity.getLocation().getWorld()).getName().replace("world_", ""));
+
+			String worldName = Objects.requireNonNull(entity.getLocation().getWorld().getName());
+
+			if(worldName.startsWith("world_")) {
+				worldName = worldName.substring("world_".length());
+			}
+			msg = msg.replace("{world}", worldName);
 		}
 
 		if (player != null && Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) {
