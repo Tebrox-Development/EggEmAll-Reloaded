@@ -14,6 +14,6 @@ public final class EggEmAllCommandGroup extends SimpleCommandGroup {
 
 	@Override
 	protected String getCredits() {
-		return "&bVisit &dhttps://dirtydogsa.co.za";
+		return "&bEggEmAll Reloaded &7- &dhttps://github.com/Tebrox-Development/EggEmAll-Reloaded";
 	}
 }

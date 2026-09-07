@@ -24,8 +24,7 @@ public final class Settings extends SimpleSettings {
 
 	@Override
 	protected int getConfigVersion() {
-		setPathPrefix("");
-		return getInteger("Version");
+		return 1;
 	}
 
 	public static class BlacklistWorlds {

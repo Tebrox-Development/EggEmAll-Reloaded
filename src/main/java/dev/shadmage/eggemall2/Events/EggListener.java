@@ -37,6 +37,7 @@ import org.mineacademy.fo.remain.CompParticle;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.UUID;
 
 @AutoRegister
 public final class EggListener implements Listener {
@@ -44,9 +45,8 @@ public final class EggListener implements Listener {
 
 	@EventHandler
 	public void onPlayerEggThrow(PlayerEggThrowEvent event) {
-		if (EggEmAllPlugin.thrownEggs.contains(event.getEgg())) {
+		if(EggEmAllPlugin.thrownEggs.remove(event.getEgg().getUniqueId())) {
 			event.setHatching(false);
-			EggEmAllPlugin.thrownEggs.remove(event.getEgg());
 		}
 	}
 
@@ -75,7 +75,7 @@ public final class EggListener implements Listener {
 		}
 	}
 
-	@EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
+	@EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
 	public void onEntityHitByEgg(EntityDamageEvent event) {
 		Common.setTellPrefix(Settings.CHAT_PREFIX);
 		Entity targetEntity = event.getEntity();
@@ -106,7 +106,7 @@ public final class EggListener implements Listener {
 		}
 
 		if (Settings.CatchChance.SPAWN_CHICKEN_ON_FAIL)
-			EggEmAllPlugin.thrownEggs.add(egg);
+			trackThrownEgg(egg);
 
 		if (Settings.Restrictions.PREVENT_CATCHING_BABIES)
 			if (targetEntity instanceof Ageable)
@@ -177,13 +177,18 @@ public final class EggListener implements Listener {
 
 		ItemStack eggStack = EggEmAllPlugin.catchableMobs.getSpawnEgg(targetEntity);
 
-		if (!Settings.EntityInventories.ERASE_ENTITY_INVENTORY && targetEntity instanceof InventoryHolder) {
-			ItemStack[] items = ((InventoryHolder) targetEntity).getInventory().getContents();
-			for (ItemStack itemStack : items) {
-				if (itemStack != null) {
-					targetEntity.getWorld().dropItemNaturally(targetEntity.getLocation(), itemStack);
+		if(targetEntity instanceof InventoryHolder inventoryHolder) {
+			ItemStack[] items = inventoryHolder.getInventory().getContents();
+
+			if(!Settings.EntityInventories.ERASE_ENTITY_INVENTORY) {
+				for(ItemStack itemStack : items) {
+					if(itemStack != null && !itemStack.getType().isAir()) {
+						targetEntity.getWorld().dropItemNaturally(targetEntity.getLocation(), itemStack.clone());
+					}
 				}
 			}
+
+			inventoryHolder.getInventory().clear();
 		}
 
 		ItemMeta meta = eggStack.getItemMeta();
@@ -220,7 +225,7 @@ public final class EggListener implements Listener {
 		targetEntity.getWorld().dropItem(targetEntity.getLocation(), eggStack);
 
 		if (!EggEmAllPlugin.thrownEggs.contains(egg)) {
-			EggEmAllPlugin.thrownEggs.add(egg);
+			trackThrownEgg(egg);
 		}
 	}
 
@@ -248,6 +253,21 @@ public final class EggListener implements Listener {
 		}
 
 		return newLore;
+	}
+
+	private void trackThrownEgg(Egg egg) {
+		if(!(egg.getShooter() instanceof Player)) {
+			return;
+		}
+
+		UUID eggId = egg.getUniqueId();
+		EggEmAllPlugin.thrownEggs.add(eggId);
+
+		Bukkit.getScheduler().runTaskLater(
+				EggEmAllPlugin.getInstance(),
+				() -> EggEmAllPlugin.thrownEggs.remove(eggId),
+				400L
+		);
 	}
 
 	@EventHandler
