@@ -3,7 +3,7 @@ version: ${project.version}
 main: ${main.class}
 authors:
   - shadmage
-  - Tebrox-Development
+  - Tebrox
 api-version: 1.21
 provides: [ EggEmAll2 ]
 softdepend: [ CMI, Vault, GriefPrevention, AuthMe, BanManager, BungeeChatAPI, DiscordSRV, Factions, Feudal, ItemsAdder, Essentials, LegacyFactions, Lands, LuckPerms, Multiverse-Core, MVdWPlaceholderAPI, MythicMobs, mcMMO, NashornPlus, Nicky, PlaceholderAPI, ProtocolLib, SimpleClans, Towny, TownyChat, WorldEdit, RoseStacker, UltimateStacker ]
