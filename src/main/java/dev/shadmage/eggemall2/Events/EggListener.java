@@ -241,15 +241,29 @@ public final class EggListener implements Listener {
 	}
 
 	private void handleEntityEggInteraction(PlayerInteractEntityEvent event) {
-		if(event.getHand() != EquipmentSlot.HAND) return;
-
 		Player player = event.getPlayer();
 		UUID playerId = player.getUniqueId();
-		ItemStack item = player.getInventory().getItemInMainHand();
 
 		if(handledEggInteractions.contains(playerId)) {
 			event.setCancelled(true);
 			return;
+		}
+
+		ItemStack item = event.getHand() == EquipmentSlot.OFF_HAND
+				? player.getInventory().getItemInOffHand()
+				: player.getInventory().getItemInMainHand();
+
+		if(event.getHand() == EquipmentSlot.HAND) {
+			ItemStack offHandItem = player.getInventory().getItemInOffHand();
+
+			boolean currentItemIsHandled = getStoredEntitySnapshot(item) != null || (event.getRightClicked() instanceof AbstractVillager && item.getType() == Material.EGG);
+			boolean offHandItemIsHandled = getStoredEntitySnapshot(offHandItem) != null || (event.getRightClicked() instanceof  AbstractVillager && offHandItem.getType() == Material.EGG);
+
+			boolean currenItemIsVanillaSpawnEgg = item.getItemMeta() instanceof SpawnEggMeta;
+
+			if(!currentItemIsHandled && !currenItemIsVanillaSpawnEgg && offHandItemIsHandled) {
+				item = offHandItem;
+			}
 		}
 
 		EntitySnapshot snapshot = getStoredEntitySnapshot(item);
