@@ -8,9 +8,7 @@ import dev.shadmage.eggemall2.Utils.ProcessPlaceholderMessages;
 import dev.shadmage.eggemall2._external.StackingPlugins.StackingPluginAPI;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
-import org.bukkit.Bukkit;
-import org.bukkit.Location;
-import org.bukkit.NamespacedKey;
+import org.bukkit.*;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
@@ -21,7 +19,10 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.ProjectileLaunchEvent;
 import org.bukkit.event.player.PlayerEggThrowEvent;
+import org.bukkit.event.player.PlayerInteractAtEntityEvent;
+import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -36,14 +37,12 @@ import org.mineacademy.fo.annotation.AutoRegister;
 import org.mineacademy.fo.remain.CompMaterial;
 import org.mineacademy.fo.remain.CompParticle;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-import java.util.UUID;
+import java.util.*;
 
 @AutoRegister
 public final class EggListener implements Listener {
 	private static final NamespacedKey EGGEMALL_ENTITY_DATA = new NamespacedKey(EggEmAllPlugin.getInstance(), "eggemall_entity_data");
+	private final Set<UUID> handledVillagerEggInteractions = new HashSet<>();
 
 	@EventHandler
 	public void onPlayerEggThrow(PlayerEggThrowEvent event) {
@@ -229,6 +228,48 @@ public final class EggListener implements Listener {
 		targetEntity.getWorld().dropItem(targetEntity.getLocation(), eggStack);
 
 		trackThrownEgg(egg);
+	}
+
+	@EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+	public void onVillagerInteractWithEgg(PlayerInteractEntityEvent event) {
+		handleVillagerEggInteraction(event);
+	}
+
+	@EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+	public void onVillagerInteractAtWithEgg(PlayerInteractAtEntityEvent event) {
+		handleVillagerEggInteraction(event);
+	}
+
+	private void handleVillagerEggInteraction(PlayerInteractEntityEvent event) {
+		if(!(event.getRightClicked() instanceof AbstractVillager)) {
+			return;
+		}
+
+		if(event.getHand() != EquipmentSlot.HAND) {
+			return;
+		}
+
+		Player player = event.getPlayer();
+		ItemStack item = player.getInventory().getItemInMainHand();
+
+		if(item.getType() != Material.EGG) {
+			return;
+		}
+
+		event.setCancelled(true);
+		UUID playerId = player.getUniqueId();
+
+		if(!handledVillagerEggInteractions.add(player.getUniqueId())) {
+			return;
+		}
+
+		player.launchProjectile(Egg.class);
+
+		if(player.getGameMode() != GameMode.CREATIVE) {
+			item.setAmount(item.getAmount() - 1);
+		}
+
+		Bukkit.getScheduler().runTask(EggEmAllPlugin.getInstance(), () -> handledVillagerEggInteractions.remove(playerId));
 	}
 
 	private boolean isCaptureAllowedInWorld(String worldName) {
