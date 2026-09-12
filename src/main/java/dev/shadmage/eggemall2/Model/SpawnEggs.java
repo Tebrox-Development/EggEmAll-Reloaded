@@ -8,6 +8,7 @@ import org.bukkit.entity.EntityType;
 import org.bukkit.inventory.ItemStack;
 import org.mineacademy.fo.EntityUtil;
 import org.mineacademy.fo.menu.model.ItemCreator;
+import org.mineacademy.fo.remain.CompEntityType;
 import org.mineacademy.fo.remain.CompMaterial;
 
 import java.util.Arrays;
@@ -22,8 +23,9 @@ public final class SpawnEggs {
 		CatchableEntities = Arrays.stream(EntityType.values()).filter(
 				entityType ->
 						entityType.isSpawnable()
-								&& !(Settings.Restrictions.BLACKLISTED_ENTITIES.contains(entityType))
-								&& entityType.isAlive()
+							&& entityType.isAlive()
+							&& CompEntityType.getSpawnEgg(entityType) != null
+							&& !Settings.Restrictions.BLACKLISTED_ENTITIES.contains(entityType)
 		).collect(Collectors.toList());
 	}
 
@@ -37,11 +39,12 @@ public final class SpawnEggs {
 
 	public ItemStack getSpawnEgg(Entity entity) {
 		EntityType entityType = entity.getType();
-		if (CatchableEntities.contains(entityType) && !Settings.Restrictions.BLACKLISTED_ENTITIES.contains(entityType)) {
+
+		if(isCatchable(entityType)) {
 			return ItemCreator.ofEgg(entityType).make();
-		} else {
-			return ItemCreator.of(CompMaterial.EGG).make();
 		}
+
+		return ItemCreator.of(CompMaterial.EGG).make();
 	}
 
 	public String getCatchPermission(Entity entity) {

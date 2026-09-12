@@ -12,6 +12,7 @@ import org.mineacademy.fo.menu.MenuPagged;
 import org.mineacademy.fo.menu.button.Button;
 import org.mineacademy.fo.menu.button.ButtonMenu;
 import org.mineacademy.fo.menu.model.ItemCreator;
+import org.mineacademy.fo.remain.CompEntityType;
 import org.mineacademy.fo.remain.CompMaterial;
 
 public class EggEmAllGUI extends Menu {
@@ -90,7 +91,13 @@ public class EggEmAllGUI extends Menu {
 
 		@Override
 		protected ItemStack convertToItemStack(EntityType entityType) {
-			return ItemCreator.ofEgg(entityType, ItemUtil.bountifyCapitalized(entityType)).make();
+			String name = ItemUtil.bountifyCapitalized(entityType);
+
+			if(CompEntityType.getSpawnEgg(entityType) != null) {
+				return ItemCreator.ofEgg(entityType, name).make();
+			}
+
+			return ItemCreator.of(CompMaterial.BARRIER).name(name).make();
 		}
 
 		@Override
