@@ -32,7 +32,7 @@ public final class EggEmAllPlaceholderExpansion extends PlaceholderExpansion {
 	@NotNull
 	@Override
 	public String getVersion() {
-		return plugin.getDescription().getVersion();
+		return plugin.getPluginMeta().getVersion();
 	}
 
 	@Override

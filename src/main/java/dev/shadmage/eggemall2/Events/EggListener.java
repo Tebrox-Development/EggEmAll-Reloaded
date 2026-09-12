@@ -6,6 +6,8 @@ import dev.shadmage.eggemall2.EggEmAllPlugin;
 import dev.shadmage.eggemall2.Settings.Settings;
 import dev.shadmage.eggemall2.Utils.ProcessPlaceholderMessages;
 import dev.shadmage.eggemall2._external.StackingPlugins.StackingPluginAPI;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.NamespacedKey;
@@ -128,7 +130,7 @@ public final class EggListener implements Listener {
 			return;
 		}
 
-		if (Settings.Restrictions.PREVENT_CATCHING_NAMED_ENTITIES && targetEntity.getCustomName() != null) {
+		if (Settings.Restrictions.PREVENT_CATCHING_NAMED_ENTITIES && targetEntity.customName() != null) {
 			if (!Settings.Messages.NO_NAMED_ENTITIES.isEmpty() && egg.getShooter() instanceof Player player)
 				Common.tell(player, ProcessPlaceholderMessages.ReplacePlaceholders(Settings.Messages.NO_NAMED_ENTITIES, targetEntity, player));
 			return;
@@ -196,8 +198,8 @@ public final class EggListener implements Listener {
 		ItemMeta meta = eggStack.getItemMeta();
 		if (meta != null) {
 			if (egg.getShooter() instanceof Player player && Settings.CatchChance.ADD_LORE_TO_EGG) {
-				List<String> newLore = replacePlaceholders(Settings.CatchChance.LORE_LINES, targetEntity, player);
-				meta.setLore(newLore);
+				List<Component> newLore = replacePlaceholders(Settings.CatchChance.LORE_LINES, targetEntity, player);
+				meta.lore(newLore);
 			}
 
 			if (Settings.NBT.MAINTAIN_ENTITY_DATA) {
@@ -234,22 +236,21 @@ public final class EggListener implements Listener {
 		return Settings.BlacklistWorlds.AS_WHITELIST == worldIsListed;
 	}
 
-	private List<String> replacePlaceholders(List<String> loreLines, Entity entity, Player player) {
-		List<String> newLore = new ArrayList<>();
+	private List<Component> replacePlaceholders(List<String> loreLines, Entity entity, Player player) {
+		List<Component> newLore = new ArrayList<>();
+
 		for (String line : loreLines) {
 			line = line.replace("{entity_name}", entity.getName());
 			line = line.replace("{entity}", ItemUtil.bountifyCapitalized(entity.getType().toString()));
 			line = line.replace("{player}", player.getName());
-			if (entity instanceof Villager villager) {
-				if (villager.getProfession() != Villager.Profession.NONE) {
-					line = line.replace("{profession}", ItemUtil.bountifyCapitalized(villager.getProfession().getKey().getKey()));
-				} else {
-					line = line.replace("{profession}", "");
-				}
+
+			if (entity instanceof Villager villager && villager.getProfession() != Villager.Profession.NONE) {
+				line = line.replace("{profession}", ItemUtil.bountifyCapitalized(villager.getProfession().getKey().getKey()));
 			} else
 				line = line.replace("{profession}", "");
+
 			line = ProcessPlaceholderMessages.ReplacePlaceholders(line, entity, player);
-			newLore.add(Common.colorize(line));
+			newLore.add(LegacyComponentSerializer.legacySection().deserialize(Common.colorize(line)));
 		}
 
 		return newLore;

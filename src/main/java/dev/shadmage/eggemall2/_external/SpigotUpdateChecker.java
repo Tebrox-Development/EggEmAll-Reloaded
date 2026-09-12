@@ -37,7 +37,7 @@ public class SpigotUpdateChecker {
 
 	public void CheckForUpdates() {
 		this.getVersion(version -> {
-			String currentVersion = this.plugin.getDescription().getVersion();
+			String currentVersion = this.plugin.getPluginMeta().getVersion();
 			int comparison = compareVersion(version, currentVersion);
 
 			if (comparison > 0) {
