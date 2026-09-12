@@ -6,7 +6,7 @@ on:
       source_ref:
         description: Source branch, tag or commit SHA to build
         required: true
-        default: master
+        default: dev
         type: string
 
 concurrency:
