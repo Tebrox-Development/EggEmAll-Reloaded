@@ -1,8 +1,6 @@
 package dev.shadmage.eggemall2._external.StackingPlugins;
 
-import dev.rosewood.rosestacker.RoseStacker;
 import dev.rosewood.rosestacker.api.RoseStackerAPI;
-import dev.rosewood.rosestacker.manager.StackManager;
 import dev.rosewood.rosestacker.stack.StackedEntity;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
@@ -23,17 +21,24 @@ public class RoseStackerSupport implements StackingPluginAPI {
 
 	@Override
 	public boolean unstackEntity(Entity entity) {
-		if (entity instanceof LivingEntity livingEntity) {
-			StackedEntity stackedEntity = rsAPI.getStackedEntity(livingEntity);
-			if (stackedEntity != null && stackedEntity.getStackSize() > 1) {
-				StackManager stackManager = RoseStacker.getInstance().getManager(StackManager.class);
-				stackedEntity.getDataStorage().pop();
-				stackManager.updateStackedEntityKey(livingEntity, stackedEntity);
-				stackedEntity.updateDisplay();
-				return true;
-			}
+		if(!(entity instanceof LivingEntity livingEntity)) {
+			return false;
 		}
-		return false;
+
+		StackedEntity stackedEntity = rsAPI.getStackedEntity(livingEntity);
+
+		if(stackedEntity == null || stackedEntity.getStackSize() <= 1) {
+			return false;
+		}
+
+		StackedEntity seperatedEntity = stackedEntity.decreaseStackSize();
+
+		if(seperatedEntity == null) {
+			return false;
+		}
+
+		seperatedEntity.getEntity().remove();
+		return true;
 	}
 
 	@Override
