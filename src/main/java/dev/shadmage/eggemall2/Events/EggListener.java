@@ -108,7 +108,7 @@ public final class EggListener implements Listener {
 			return;
 		}
 
-		if (Settings.CatchChance.SPAWN_CHICKEN_ON_FAIL)
+		if (!Settings.CatchChance.SPAWN_CHICKEN_ON_FAIL)
 			trackThrownEgg(egg);
 
 		if (Settings.Restrictions.PREVENT_CATCHING_BABIES && targetEntity instanceof Ageable ageable && !ageable.isAdult()) {
