@@ -42,7 +42,7 @@ import java.util.*;
 @AutoRegister
 public final class EggListener implements Listener {
 	private static final NamespacedKey EGGEMALL_ENTITY_DATA = new NamespacedKey(EggEmAllPlugin.getInstance(), "eggemall_entity_data");
-	private final Set<UUID> handledVillagerEggInteractions = new HashSet<>();
+	private final Set<UUID> handledEggInteractions = new HashSet<>();
 
 	@EventHandler
 	public void onPlayerEggThrow(PlayerEggThrowEvent event) {
@@ -232,34 +232,53 @@ public final class EggListener implements Listener {
 
 	@EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
 	public void onVillagerInteractWithEgg(PlayerInteractEntityEvent event) {
-		handleVillagerEggInteraction(event);
+		handleEntityEggInteraction(event);
 	}
 
 	@EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
 	public void onVillagerInteractAtWithEgg(PlayerInteractAtEntityEvent event) {
-		handleVillagerEggInteraction(event);
+		handleEntityEggInteraction(event);
 	}
 
-	private void handleVillagerEggInteraction(PlayerInteractEntityEvent event) {
-		if(!(event.getRightClicked() instanceof AbstractVillager)) {
-			return;
-		}
-
-		if(event.getHand() != EquipmentSlot.HAND) {
-			return;
-		}
+	private void handleEntityEggInteraction(PlayerInteractEntityEvent event) {
+		if(event.getHand() != EquipmentSlot.HAND) return;
 
 		Player player = event.getPlayer();
+		UUID playerId = player.getUniqueId();
 		ItemStack item = player.getInventory().getItemInMainHand();
 
-		if(item.getType() != Material.EGG) {
+		if(handledEggInteractions.contains(playerId)) {
+			event.setCancelled(true);
 			return;
 		}
 
-		event.setCancelled(true);
-		UUID playerId = player.getUniqueId();
+		EntitySnapshot snapshot = getStoredEntitySnapshot(item);
 
-		if(!handledVillagerEggInteractions.add(player.getUniqueId())) {
+		if(snapshot != null) {
+			event.setCancelled(true);
+
+			if(!handledEggInteractions.add(playerId)) {
+				return;
+			}
+
+			Location spawnLocation = event.getRightClicked().getLocation().clone().add(0, 0.1, 0);
+			snapshot.createEntity(spawnLocation);
+
+			if(player.getGameMode() != GameMode.CREATIVE) {
+				item.setAmount(item.getAmount() - 1);
+			}
+
+			clearHandledEggInteraction(playerId);
+			return;
+		}
+
+		if(!(event.getRightClicked() instanceof AbstractVillager)) return;
+
+		if(item.getType() != Material.EGG) return;
+
+		event.setCancelled(true);
+
+		if(!handledEggInteractions.add(playerId)) {
 			return;
 		}
 
@@ -269,7 +288,7 @@ public final class EggListener implements Listener {
 			item.setAmount(item.getAmount() - 1);
 		}
 
-		Bukkit.getScheduler().runTask(EggEmAllPlugin.getInstance(), () -> handledVillagerEggInteractions.remove(playerId));
+		clearHandledEggInteraction(playerId);
 	}
 
 	private boolean isCaptureAllowedInWorld(String worldName) {
@@ -295,6 +314,34 @@ public final class EggListener implements Listener {
 		}
 
 		return newLore;
+	}
+
+	private EntitySnapshot getStoredEntitySnapshot(ItemStack item) {
+		ItemMeta meta = item.getItemMeta();
+
+		if(meta == null) {
+			return null;
+		}
+
+		if(meta instanceof SpawnEggMeta spawnEggMeta) {
+			EntitySnapshot snapshot = spawnEggMeta.getSpawnedEntity();
+
+			if(snapshot != null) {
+				return snapshot;
+			}
+		}
+
+		String snapshotString = meta.getPersistentDataContainer().get(EGGEMALL_ENTITY_DATA, PersistentDataType.STRING);
+
+		if(snapshotString != null) {
+			return Bukkit.getEntityFactory().createEntitySnapshot(snapshotString);
+		}
+
+		return null;
+	}
+
+	private void clearHandledEggInteraction(UUID playerId) {
+		Bukkit.getScheduler().runTask(EggEmAllPlugin.getInstance(), () -> handledEggInteractions.remove(playerId));
 	}
 
 	private void trackThrownEgg(Egg egg) {
