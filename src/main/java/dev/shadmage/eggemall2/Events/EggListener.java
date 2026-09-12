@@ -380,7 +380,7 @@ public final class EggListener implements Listener {
 	}
 
 	@EventHandler
-	public void itemuse(PlayerInteractEvent e) {
+	public void itemUse(PlayerInteractEvent e) {
 		if (e.getAction() == Action.RIGHT_CLICK_BLOCK && e.getItem() != null) {
 			ItemStack item = e.getItem();
 			if (CompMaterial.isMonsterEgg(item.getType()) && Settings.NBT.MAINTAIN_ENTITY_DATA) {
@@ -389,7 +389,7 @@ public final class EggListener implements Listener {
 					String snapshotString = meta.getPersistentDataContainer().get(EGGEMALL_ENTITY_DATA, PersistentDataType.STRING);
 					EntitySnapshot snapshot = Bukkit.getEntityFactory().createEntitySnapshot(snapshotString);
 					Location loc = e.getClickedBlock().getLocation().clone().add(0.5, 1, 0.5);
-					while (!CompMaterial.isAir(loc.getBlock()) && !CompMaterial.isAir(loc.getBlock().getRelative(BlockFace.UP)))
+					while (!CompMaterial.isAir(loc.getBlock()) || !CompMaterial.isAir(loc.getBlock().getRelative(BlockFace.UP)))
 						loc = loc.add(0, 1, 0);
 					snapshot.createEntity(loc);
 					PlayerUtil.takeOnePiece(e.getPlayer(), item);
