@@ -231,12 +231,12 @@ public final class EggListener implements Listener {
 	}
 
 	@EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
-	public void onVillagerInteractWithEgg(PlayerInteractEntityEvent event) {
+	public void onEntityInteractAtWithEgg(PlayerInteractAtEntityEvent event) {
 		handleEntityEggInteraction(event);
 	}
 
 	@EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
-	public void onVillagerInteractAtWithEgg(PlayerInteractAtEntityEvent event) {
+	public void onEntityInteractWithEgg(PlayerInteractEntityEvent event) {
 		handleEntityEggInteraction(event);
 	}
 
@@ -261,14 +261,16 @@ public final class EggListener implements Listener {
 				return;
 			}
 
-			Location spawnLocation = event.getRightClicked().getLocation().clone().add(0, 0.1, 0);
-			snapshot.createEntity(spawnLocation);
+			try {
+				Location spawnLocation = event.getRightClicked().getLocation().clone().add(0, 0.1, 0);
+				snapshot.createEntity(spawnLocation);
 
-			if(player.getGameMode() != GameMode.CREATIVE) {
-				item.setAmount(item.getAmount() - 1);
+				if (player.getGameMode() != GameMode.CREATIVE) {
+					item.setAmount(item.getAmount() - 1);
+				}
+			}finally {
+				clearHandledEggInteraction(playerId);
 			}
-
-			clearHandledEggInteraction(playerId);
 			return;
 		}
 
@@ -282,13 +284,15 @@ public final class EggListener implements Listener {
 			return;
 		}
 
-		player.launchProjectile(Egg.class);
+		try {
+			player.launchProjectile(Egg.class);
 
-		if(player.getGameMode() != GameMode.CREATIVE) {
-			item.setAmount(item.getAmount() - 1);
+			if (player.getGameMode() != GameMode.CREATIVE) {
+				item.setAmount(item.getAmount() - 1);
+			}
+		}finally {
+			clearHandledEggInteraction(playerId);
 		}
-
-		clearHandledEggInteraction(playerId);
 	}
 
 	private boolean isCaptureAllowedInWorld(String worldName) {
