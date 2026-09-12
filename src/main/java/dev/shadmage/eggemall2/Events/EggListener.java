@@ -52,55 +52,57 @@ public final class EggListener implements Listener {
 
 	@EventHandler
 	public void onProjectileLaunch(ProjectileLaunchEvent event) {
-		Projectile shot = event.getEntity();
-		if (Settings.Particles.PLAYER_THROW_ONLY && !(shot.getShooter() instanceof Player)) {
+		if(!(event.getEntity() instanceof Egg egg)) {
 			return;
 		}
-		if (shot instanceof Egg) {
-			String currentWorldName = shot.getWorld().getName();
-			if (isCaptureAllowedInWorld(currentWorldName)) {
-				if (Settings.Particles.EGG_TRAILS) {
-					new BukkitRunnable() {
-						@Override
-						public void run() {
-							if (!shot.isValid() || shot.isOnGround() || shot.isInWater()) {
-								cancel();
-								return;
-							}
-							CompParticle.SPELL_WITCH.spawn(shot.getLocation());
-						}
-					}.runTaskTimer(EggEmAllPlugin.getInstance(), 0, 1);
-				}
-			}
+
+		if(Settings.Particles.PLAYER_THROW_ONLY && !(egg.getShooter() instanceof Player)) {
+			return;
 		}
+
+		if(!isCaptureAllowedInWorld(egg.getWorld().getName())) {
+			return;
+		}
+
+		if(!Settings.Particles.EGG_TRAILS) {
+			return;
+		}
+
+		new BukkitRunnable() {
+			@Override
+			public void run() {
+				if(!egg.isValid() || egg.isOnGround() || egg.isInWater()) {
+					cancel();
+					return;
+				}
+
+				CompParticle.SPELL_WITCH.spawn(egg.getLocation());
+			}
+		}.runTaskTimer(EggEmAllPlugin.getInstance(), 0, 1);
 	}
 
 	@EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
 	public void onEntityHitByEgg(EntityDamageEvent event) {
-		Common.setTellPrefix(Settings.CHAT_PREFIX);
-		Entity targetEntity = event.getEntity();
-
-		String groupPermission = EggEmAllPlugin.catchableMobs.getCatchPermission(targetEntity);
-		String mobSpecificPermission = "eggemall.catchmob." + targetEntity.getType().name().toLowerCase(Locale.ROOT);
-		String legacyMobSpecificPermission = "eggemall.catchmob." + targetEntity.getName();
-
 		if (!(event instanceof EntityDamageByEntityEvent damageEvent))
 			return;
 
 		if (!(damageEvent.getDamager() instanceof Egg egg))
 			return;
 
+		Common.setTellPrefix(Settings.CHAT_PREFIX);
+		Entity targetEntity = event.getEntity();
+
 		EntityCaptureEvent entityCaptureEvent = new EntityCaptureEvent(targetEntity, egg);
 		EntityEscapeCaptureEvent entityEscapeEvent = new EntityEscapeCaptureEvent(targetEntity, egg);
 
 		if (!isCaptureAllowedInWorld(egg.getWorld().getName())) {
-			if (Settings.Messages.BLACKLISTED_WORLD.length() > 0 && egg.getShooter() instanceof Player player)
+			if (!Settings.Messages.BLACKLISTED_WORLD.isEmpty() && egg.getShooter() instanceof Player player)
 				Common.tell(player, ProcessPlaceholderMessages.ReplacePlaceholders(Settings.Messages.BLACKLISTED_WORLD, targetEntity, player));
 			return;
 		}
 
 		if (!EggEmAllPlugin.catchableMobs.isCatchable(targetEntity)) {
-			if (Settings.Messages.NOT_CATCHABLE.length() > 0 && egg.getShooter() instanceof Player player)
+			if (!Settings.Messages.NOT_CATCHABLE.isEmpty() && egg.getShooter() instanceof Player player)
 				Common.tell(player, ProcessPlaceholderMessages.ReplacePlaceholders(Settings.Messages.NOT_CATCHABLE, targetEntity, player));
 			return;
 		}
@@ -108,36 +110,29 @@ public final class EggListener implements Listener {
 		if (Settings.CatchChance.SPAWN_CHICKEN_ON_FAIL)
 			trackThrownEgg(egg);
 
-		if (Settings.Restrictions.PREVENT_CATCHING_BABIES)
-			if (targetEntity instanceof Ageable)
-				if (!((Ageable) targetEntity).isAdult()) {
-					if (Settings.Messages.NO_BABIES.length() > 0 && egg.getShooter() instanceof Player player)
-						Common.tell(player, ProcessPlaceholderMessages.ReplacePlaceholders(Settings.Messages.NO_BABIES, targetEntity, player));
-					return;
-				}
+		if (Settings.Restrictions.PREVENT_CATCHING_BABIES && targetEntity instanceof Ageable ageable && !ageable.isAdult()) {
+			if (!Settings.Messages.NO_BABIES.isEmpty() && egg.getShooter() instanceof Player player)
+				Common.tell(player, ProcessPlaceholderMessages.ReplacePlaceholders(Settings.Messages.NO_BABIES, targetEntity, player));
+			return;
+		}
 
-		if (Settings.Restrictions.PREVENT_CATCHING_TAMED)
-			if (targetEntity instanceof Tameable)
-				if (((Tameable) targetEntity).isTamed()) {
-					if (Settings.Messages.NO_TAMED.length() > 0 && egg.getShooter() instanceof Player player)
-						Common.tell(player, ProcessPlaceholderMessages.ReplacePlaceholders(Settings.Messages.NO_TAMED, targetEntity, player));
-					return;
-				}
+		if (Settings.Restrictions.PREVENT_CATCHING_TAMED && targetEntity instanceof Tameable tameable && tameable.isTamed()) {
+			if (!Settings.Messages.NO_TAMED.isEmpty() && egg.getShooter() instanceof Player player)
+				Common.tell(player, ProcessPlaceholderMessages.ReplacePlaceholders(Settings.Messages.NO_TAMED, targetEntity, player));
+			return;
+		}
 
-		if (Settings.Restrictions.PREVENT_CATCHING_SHEARED_SHEEP)
-			if (targetEntity instanceof Sheep)
-				if (((Sheep) targetEntity).isSheared()) {
-					if (Settings.Messages.NO_SHEARED_SHEEP.length() > 0 && egg.getShooter() instanceof Player player)
-						Common.tell(player, ProcessPlaceholderMessages.ReplacePlaceholders(Settings.Messages.NO_SHEARED_SHEEP, targetEntity, player));
-					return;
-				}
+		if (Settings.Restrictions.PREVENT_CATCHING_SHEARED_SHEEP && targetEntity instanceof Sheep sheep && sheep.isSheared()) {
+			if (!Settings.Messages.NO_SHEARED_SHEEP.isEmpty() && egg.getShooter() instanceof Player player)
+				Common.tell(player, ProcessPlaceholderMessages.ReplacePlaceholders(Settings.Messages.NO_SHEARED_SHEEP, targetEntity, player));
+			return;
+		}
 
-		if (Settings.Restrictions.PREVENT_CATCHING_NAMED_ENTITIES)
-			if (targetEntity.getCustomName() != null) {
-				if (Settings.Messages.NO_NAMED_ENTITIES.length() > 0 && egg.getShooter() instanceof Player player)
-					Common.tell(player, ProcessPlaceholderMessages.ReplacePlaceholders(Settings.Messages.NO_NAMED_ENTITIES, targetEntity, player));
-				return;
-			}
+		if (Settings.Restrictions.PREVENT_CATCHING_NAMED_ENTITIES && targetEntity.getCustomName() != null) {
+			if (!Settings.Messages.NO_NAMED_ENTITIES.isEmpty() && egg.getShooter() instanceof Player player)
+				Common.tell(player, ProcessPlaceholderMessages.ReplacePlaceholders(Settings.Messages.NO_NAMED_ENTITIES, targetEntity, player));
+			return;
+		}
 
 		EggEmAllPlugin.getInstance().getServer().getPluginManager().callEvent(entityCaptureEvent);
 		if (entityCaptureEvent.isCancelled())
@@ -151,21 +146,28 @@ public final class EggListener implements Listener {
 				return;
 			}
 		} else {
-			if (Settings.Restrictions.REQUIRE_PERMISSIONS)
-				if (!(player.hasPermission(groupPermission)
-						|| player.hasPermission(mobSpecificPermission)
-						|| player.hasPermission(legacyMobSpecificPermission))) {
-					if (Settings.Messages.NO_PERMISSION.length() > 0)
+			if(Settings.Restrictions.REQUIRE_PERMISSIONS) {
+				String groupPermission = EggEmAllPlugin.catchableMobs.getCatchPermission(targetEntity);
+				String mobSpecificPermission = "eggemall.catchmob." + targetEntity.getType().name().toLowerCase(Locale.ROOT);
+				String legacyMobSpecificPermission = "eggemall.catchmob." + targetEntity.getName();
+
+				if(!(player.hasPermission(groupPermission)
+					|| player.hasPermission(mobSpecificPermission)
+					|| player.hasPermission(legacyMobSpecificPermission))) {
+
+					if(!Settings.Messages.NO_PERMISSION.isEmpty()) {
 						Common.tell(player, ProcessPlaceholderMessages.ReplacePlaceholders(Settings.Messages.NO_PERMISSION, targetEntity, player));
+					}
 					return;
 				}
+			}
 
 			if (RandomUtil.chance(Settings.CatchChance.CHANCE_PERCENTAGE)) {
-				if (Settings.Messages.CATCH_SUCCESS.length() > 0)
+				if (!Settings.Messages.CATCH_SUCCESS.isEmpty())
 					Common.tell(player, ProcessPlaceholderMessages.ReplacePlaceholders(Settings.Messages.CATCH_SUCCESS, targetEntity, player));
 			} else {
 				EggEmAllPlugin.getInstance().getServer().getPluginManager().callEvent(entityEscapeEvent);
-				if (Settings.Messages.CATCH_FAILED_CHANCE.length() > 0)
+				if (!Settings.Messages.CATCH_FAILED_CHANCE.isEmpty())
 					Common.tell(player, ProcessPlaceholderMessages.ReplacePlaceholders(Settings.Messages.CATCH_FAILED_CHANCE, targetEntity, player));
 				return;
 			}
@@ -224,9 +226,7 @@ public final class EggListener implements Listener {
 
 		targetEntity.getWorld().dropItem(targetEntity.getLocation(), eggStack);
 
-		if (!EggEmAllPlugin.thrownEggs.contains(egg)) {
-			trackThrownEgg(egg);
-		}
+		trackThrownEgg(egg);
 	}
 
 	private boolean isCaptureAllowedInWorld(String worldName) {
@@ -261,7 +261,9 @@ public final class EggListener implements Listener {
 		}
 
 		UUID eggId = egg.getUniqueId();
-		EggEmAllPlugin.thrownEggs.add(eggId);
+		if(!EggEmAllPlugin.thrownEggs.add(eggId)) {
+			return;
+		}
 
 		Bukkit.getScheduler().runTaskLater(
 				EggEmAllPlugin.getInstance(),
@@ -272,11 +274,15 @@ public final class EggListener implements Listener {
 
 	@EventHandler
 	public void onEntityEscapeCapture(EntityEscapeCaptureEvent event) {
-		if (Settings.CatchChance.REMOVE_ENTITY_ON_FAIL_CHANCE) {
-			event.getEntity().remove();
-			if (Settings.Particles.SMOKE_ON_ESCAPE) {
-				CompParticle.SMOKE_LARGE.spawn(event.getEntity().getLocation());
-			}
+		if(!Settings.CatchChance.REMOVE_ENTITY_ON_FAIL_CHANCE) {
+			return;
+		}
+
+		Location location = event.getEntity().getLocation();
+		event.getEntity().remove();
+
+		if(Settings.Particles.SMOKE_ON_ESCAPE) {
+			CompParticle.SMOKE_LARGE.spawn(location);
 		}
 	}
 

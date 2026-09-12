@@ -17,7 +17,7 @@ public class SpigotUpdateChecker {
 	private final SimplePlugin plugin;
 	private final int resourceId;
 
-	public SpigotUpdateChecker(@NonNull SimplePlugin plugin, @NonNull int resourceId) {
+	public SpigotUpdateChecker(@NonNull SimplePlugin plugin, int resourceId) {
 		this.plugin = plugin;
 		this.resourceId = resourceId;
 		this.CheckForUpdates();

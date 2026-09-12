@@ -5,6 +5,7 @@ import dev.shadmage.eggemall2.Settings.Settings;
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Locale;
 
@@ -16,16 +17,19 @@ public final class EggEmAllPlaceholderExpansion extends PlaceholderExpansion {
 		this.plugin = plugin;
 	}
 
+	@NotNull
 	@Override
 	public String getIdentifier() {
 		return "eggemall";
 	}
 
+	@NotNull
 	@Override
 	public String getAuthor() {
 		return "Tebrox-Development";
 	}
 
+	@NotNull
 	@Override
 	public String getVersion() {
 		return plugin.getDescription().getVersion();

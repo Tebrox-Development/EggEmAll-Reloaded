@@ -26,7 +26,7 @@ public class RoseStackerSupport implements StackingPluginAPI {
 		if (entity instanceof LivingEntity livingEntity) {
 			StackedEntity stackedEntity = rsAPI.getStackedEntity(livingEntity);
 			if (stackedEntity != null && stackedEntity.getStackSize() > 1) {
-				StackManager stackManager = (StackManager) RoseStacker.getInstance().getManager(StackManager.class);
+				StackManager stackManager = RoseStacker.getInstance().getManager(StackManager.class);
 				stackedEntity.getDataStorage().pop();
 				stackManager.updateStackedEntityKey(livingEntity, stackedEntity);
 				stackedEntity.updateDisplay();
